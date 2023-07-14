@@ -7,15 +7,39 @@ provideVSCodeDesignSystem().register(vsCodeButton(), vsCodeTag(), vsCodePanelTab
 
 window.addEventListener("load", main);
 function main() {
+	let repoSourceType = "";
 	const installButton = document.getElementById("installButton");
-	installButton.addEventListener("click", installButtonClick);
+	if  (installButton){
+		installButton.addEventListener("click", installButtonClick);
+		installButton.addEventListener('click', function() { 
+			installButton.innerText = "Installing...";
+			
+			const extensionId = installButton.getAttribute("data-extension");
+			const checkInterval = setInterval(function() {
+			  const isInstalled = vscode.extensions.getExtension(extensionId) !== undefined;
+		
+			  if (isInstalled) {
+				installButton.innerText = "Uninstall";
+				clearInterval(checkInterval);
+			  }
+			}, 100);
+		  });
+		repoSourceType = installButton.getAttribute("data-extension-sourcetype");
+	}
+
+	const uninstallButton = document.getElementById("uninstallButton");
+	if (uninstallButton){
+		uninstallButton.addEventListener("click", unInstallButtonClick);
+		repoSourceType = uninstallButton.getAttribute("data-extension-sourcetype");
+	}
+
 
 	const markdownDiv = document.getElementById("markdownDiv");
 	const markdownPath = markdownDiv.getAttribute("data-markdown-path");
 	const markdownPathUri = markdownDiv.getAttribute("data-markdown-relativepath");
 
 	const nameElement = document.getElementById("packageId");
-	const repoSourceType = installButton.getAttribute("data-extension-sourcetype");
+	
 	const repoSource = nameElement.getAttribute("data-repo-source");
 	console.log(nameElement);
 	console.log(repoSourceType);
@@ -51,6 +75,27 @@ function installButtonClick(event) {
 	const target = event.target.getAttribute("data-extension-target");
 	vscode.postMessage({
 		command: 'install',
+		id: id,
+		location: location,
+		sourceType: sourceType,
+		version: version,
+		target: target
+	});
+	
+}
+
+
+/**
+ * @param {MouseEvent} event
+ */
+function unInstallButtonClick(event) {
+	const id = event.target.getAttribute("data-extension");
+	const location = event.target.getAttribute("data-package-location");
+	const sourceType = event.target.getAttribute("data-extension-sourcetype");
+	const version = event.target.getAttribute("data-extension-version");
+	const target = event.target.getAttribute("data-extension-target");
+	vscode.postMessage({
+		command: 'uninstall',
 		id: id,
 		location: location,
 		sourceType: sourceType,

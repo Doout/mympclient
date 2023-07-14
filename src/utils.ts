@@ -133,6 +133,7 @@ export class AppConstants {
 	static commandPrerelease: string = "mympclient.prerelease";
 	static commandInstall: string = "mympclient.install";
 	static commandWorkbenchInstall: string = "workbench.extensions.installExtension";
+	static commandWorkbenchUninstall: string = "workbench.extensions.uninstallExtension";
 	static commandAuth: string = "mympclient.getAuth";
 	static extensionDetails: string = "mympclient-extension-details";
 	static commandRevealInOs: string = "mympclient.revealInOS";
@@ -147,5 +148,6 @@ export class AppConstants {
 	static directoryTreeViewId: string = "mympclient-dir-extensions";
 
 	static messageInstall: string = "install";
+	static messageUninstall: string = "uninstall";
 	static token: string = "";
 }

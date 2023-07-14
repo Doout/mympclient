@@ -46,12 +46,17 @@ export class ExtensionDetailsPanel {
 		// This happens when the user closes the panel or when the panel is closed programmatically
 		this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
 
+
 		// Handle messages from the webview
 		this._panel.webview.onDidReceiveMessage(
 			(message) => {
+				console.log(message)
 				switch (message.command) {
 					case AppConstants.messageInstall:
 						vscode.commands.executeCommand(AppConstants.commandInstall, message.id, message.location, message.sourceType, message.version, message.target);
+						return;
+					case AppConstants.messageUninstall:
+						vscode.commands.executeCommand(AppConstants.commandWorkbenchUninstall, message.id);
 						return;
 				}
 			},
@@ -81,31 +86,40 @@ export class ExtensionDetailsPanel {
 	}
 
 	private _getHtmlForWebview(webview: vscode.Webview, item: ExtensionPackage) {
-		// Get the local path to main script run in the webview, then convert it to a uri we can use in the webview.
-		const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "markdown-it.min.js"));
-		const webviewScript = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "out", "webview.js"));
+	//console.log(item.identifier);
+	
+	let itemExt = vscode.extensions.getExtension(item.identifier);
+	//console.log(itemExt);
+	const isInstalled = itemExt !== undefined;
 
-		// Do the same for the stylesheet
-		const styleVSCodeUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "vscode.css"));
-		const styleGithub = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "gh.css"));
-		const styleMain = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "main.css"));
-		const defaultIcon = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "default_icon_128.png"));
+	const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "markdown-it.min.js"));
+	const webviewScript = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "out", "webview.js"));
 
-		const codiconsUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "codicon.css"));
+	const styleVSCodeUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "vscode.css"));
+	const styleGithub = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "gh.css"));
+	const styleMain = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "main.css"));
+	const defaultIcon = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "default_icon_128.png"));
 
-		// Use a nonce to only allow a specific script to be run.
-		const nonce = getNonce();
-		let imageUri = defaultIcon.toString();;
+	const codiconsUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "codicon.css"));
 
-		const baseUrl = flattenUrl(getExtensionSource());
+	const nonce = getNonce();
+	let imageUri = defaultIcon.toString();
 
-		if (item.source.length < 1) {	
-			imageUri = `${baseUrl}/${item.mainExtension.iconPath}`;
-		}
+	const baseUrl = flattenUrl(getExtensionSource());
 
-		if (item.base64Icon && item.base64Icon.length > 0){
-			imageUri = item.base64Icon;
-		}
+	if (item.source.length < 1) {	
+		imageUri = `${baseUrl}/${item.mainExtension.iconPath}`;
+	}
+
+	if (item.base64Icon && item.base64Icon.length > 0){
+		imageUri = item.base64Icon;
+	}
+	
+	// Define button text and id based on whether the extension is already installed
+	const buttonText = isInstalled ? "Uninstall" : "Install";
+	const buttonId = isInstalled ? "uninstallButton" : "installButton";
+
+		
 
 		return /*html*/ `
     <!DOCTYPE html>
@@ -141,8 +155,8 @@ export class ExtensionDetailsPanel {
 					${item.description}
 				</div>
 				<div class="actions">
-					<vscode-button appearance="primary" id="installButton" data-extension-target="${(item.mainExtension.extension.target === undefined) ? "any":item.mainExtension.extension.target}" data-extension-version="${item.version}" data-extension-sourcetype="${item.sourceType}" data-package-location="${item.mainExtension.extension.location}" data-extension="${item.identifier}">
-						Install
+					<vscode-button appearance="primary" id="${buttonId}" data-extension-target="${(item.mainExtension.extension.target === undefined) ? "any":item.mainExtension.extension.target}" data-extension-version="${item.version}" data-extension-sourcetype="${item.sourceType}" data-package-location="${item.mainExtension.extension.location}" data-extension="${item.identifier}">
+						${buttonText}
 						<span slot="start" class="codicon codicon-desktop-download"></span>
 					</vscode-button>
 				</div>
